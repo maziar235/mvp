@@ -216,3 +216,105 @@ enum GoalMode {
   GENERAL
   EXACT
 }
+
+// ====== NEW MODELS FOR SOCIAL + ORDERING SYSTEM ======
+
+model Vendor {
+  id              String   @id @default(cuid())
+  name            String?
+  location        Json?
+  leadTimeMinutes Int?
+  capacity        Int?
+  minOrderQty     Int      @default(1)
+  updatedAt       DateTime @default(now())
+  meals           Meal[]
+  orders          Order[]
+
+  @@map("vendors")
+}
+
+model Meal {
+  id                  String   @id @default(cuid())
+  vendorId            String?
+  vendor              Vendor?  @relation(fields: [vendorId], references: [id])
+  title               String?
+  description         String?
+  tags                String[]
+  nutrition           Json?
+  cost                Float?
+  prepTimeMinutes     Int?
+  portionSize         Int?
+  sustainabilityScore Float?
+  createdAt           DateTime @default(now())
+  videos              Video[]
+
+  @@map("meals")
+}
+
+model Video {
+  id            String   @id @default(cuid())
+  mealId        String?
+  meal          Meal?    @relation(fields: [mealId], references: [id])
+  vendorId      String?
+  vendor        Vendor?  @relation(fields: [vendorId], references: [id])
+  s3Key         String?
+  durationSeconds Int?
+  thumbnailS3   String?
+  createdAt     DateTime @default(now())
+  metadata      Json     @default("{}")
+  socialEvents  SocialEvent[]
+
+  @@map("videos")
+}
+
+model SocialEvent {
+  id           BigInt   @id @default(autoincrement())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
+  videoId      String
+  video        Video    @relation(fields: [videoId], references: [id])
+  eventType    String   // e.g., 'play', 'like', 'share', 'completion'
+  eventPayload Json     @default("{}")
+  createdAt    DateTime @default(now())
+
+  @@map("social_events")
+}
+
+model Order {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  vendorId  String
+  vendor    Vendor   @relation(fields: [vendorId], references: [id])
+  mealId    String
+  meal      Meal     @relation(fields: [mealId], references: [id])
+  total     Float
+  status    String
+  createdAt DateTime @default(now())
+  metadata  Json?
+
+  @@map("orders")
+}
+
+model Waitlist {
+  id        String   @id @default(cuid())
+  eventId   String?  // optional: could reference an external event (e.g., video or meal launch)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  priority  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("waitlist")
+}
+
+model Recommendation {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  recType   String   // e.g., 'meal', 'video', 'bundle'
+  items     Json     // array of recommended item IDs or full objects
+  context   Json     // e.g., { "source": "video", "videoId": "..." }
+  createdAt DateTime @default(now())
+
+  @@map("recommendations")
+}
