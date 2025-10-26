@@ -1,11 +1,16 @@
 import type { AppProps } from 'next/app';
-import { SessionProvider } from 'next-auth/react';
-import '../src/app/globals.css';
+import { useRouter } from 'next/router';
+import '../styles/main.css';
+import '../styles/variables.css';
 
-export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
-  return (
-    <SessionProvider session={session}>
-      <Component {...pageProps} />
-    </SessionProvider>
-  );
-} 
+function MyApp({ Component, pageProps }: AppProps) {
+  const router = useRouter();
+  
+  // Don't show header on auth pages
+  const noHeaderPages = ['/login', '/register', '/'];
+  const showHeader = !noHeaderPages.includes(router.pathname);
+
+  return <Component {...pageProps} />;
+}
+
+export default MyApp;
