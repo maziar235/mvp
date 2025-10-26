@@ -1,5 +1,7 @@
 /* Main CSS File - MEALS4V Application */
 
+/* Import new variables FIRST */
+@import './variables.css';
 /* Import Component Styles */
 @import './components/auth.css';
 @import './components/landing.css';
