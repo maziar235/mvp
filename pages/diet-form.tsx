@@ -1,12 +1,15 @@
 import dynamic from "next/dynamic";
+import React from "react";
+import Layout from "../components/Layout";
+import { useAuth } from "../hooks/useAuth";
 
-// Create a client-only version of the diet form
+// Dynamically import the client-side form with SSR disabled
 const DietFormClient = dynamic(() => import('../components/DietFormClient'), {
   ssr: false,
   loading: () => <p>Loading diet form...</p>,
 });
 
-// Disable static generation for this page
+// Ensure this page is server-rendered so auth context is available
 export const getServerSideProps = () => {
   return {
     props: {},
@@ -14,5 +17,18 @@ export const getServerSideProps = () => {
 };
 
 export default function DietForm() {
-  return <DietFormClient />;
-} 
+  const { user } = useAuth();
+
+  return (
+    <Layout
+      userName={user?.name || "User"}
+      notificationsCount={2}
+      showHeader={true}
+    >
+      <div className="diet-form-container">
+        <h1>Diet Preferences</h1>
+        <DietFormClient />
+      </div>
+    </Layout>
+  );
+}
