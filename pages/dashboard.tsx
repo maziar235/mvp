@@ -33,7 +33,16 @@ export default function DashboardPage() {
       >
         Sign Out
       </button>
+
+      <button 
+        onClick={() => router.push('/your-page')}
+        className="flex flex-col items-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg hover:shadow-md transition-shadow"
+      >
+        <span className="text-3xl mb-2">🎯</span>
+        <span className="text-sm font-semibold text-blue-900">
+          Your Action
+        </span>
+      </button>
     </div>
   );
 }
-
