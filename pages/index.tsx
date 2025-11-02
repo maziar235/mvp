@@ -1,9 +1,25 @@
-// #import styles from '../styles/Home.module.css';
+import React from "react";
+import Link from "next/link";
 import styles from './pages/index.module.css';
 
-const HomePage = () => {
+export default function HomePage() {
   return (
     <div id="page-home" className="page">
+      {/* ========== NEW LANDING HEADER ========== */}
+      <header className="landing-header">
+        <div className="landing-header__inner">
+          <div className="landing-logo">
+            <span className="landing-logo__icon">M4V</span>
+            <span className="landing-logo__text">Meals4V</span>
+          </div>
+          <nav className="landing-nav">
+            <Link href="/login">Login</Link>
+            <Link href="/register" className="btn-primary">Get Started</Link>
+          </nav>
+        </div>
+      </header>
+
+      {/* ========== EXISTING DASHBOARD CONTENT ========== */}
       {/* Live Updates Section */}
       <div className="card" style={{ position: 'relative' }}>
         <div className="card-header">
@@ -93,6 +109,4 @@ const HomePage = () => {
       </div>
     </div>
   );
-};
-
-export default HomePage;
+}
