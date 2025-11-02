@@ -1,26 +1,28 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import Layout from "./Layout";
+import { useAuth } from "../hooks/useAuth";
 import { useRouter } from "next/router";
 
-const DIET_TYPES = ["vegan", "vegetarian", "omnivore", "4FED"] as const;
-
-type DietType = typeof DIET_TYPES[number];
-
-type FormData = {
-  dietType?: DietType;
-  answers: string[];
-};
+const DIET_TYPES = ["vegan", "vegetarian", "omnivore", "4FED"];
 
 const TOTAL_PAGES = 20;
 
-function getInitialFormData(): FormData {
+function getInitialFormData() {
   if (typeof window !== "undefined") {
     const saved = localStorage.getItem("dietFormData");
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Ensure answers array has correct length
+      if (parsed.answers.length !== TOTAL_PAGES - 1) {
+        parsed.answers = Array(TOTAL_PAGES - 1).fill("");
+      }
+      return parsed;
+    }
   }
   return { dietType: undefined, answers: Array(TOTAL_PAGES - 1).fill("") };
 }
 
-const QUESTIONS: Record<DietType, string[]> = {
+const QUESTIONS = {
   vegan: [
     "What is your primary motivation for choosing a vegan diet?",
     "How long have you been following a vegan diet?",
@@ -112,10 +114,12 @@ const QUESTIONS: Record<DietType, string[]> = {
 };
 
 export default function DietFormClient() {
-  const [page, setPage] = useState(0);
-  const [formData, setFormData] = useState<FormData>(getInitialFormData());
+  const { user } = useAuth();
   const router = useRouter();
+  const [page, setPage] = useState(0);
+  const [formData, setFormData] = useState(getInitialFormData());
 
+  // Persist form data to localStorage
   useEffect(() => {
     localStorage.setItem("dietFormData", JSON.stringify(formData));
   }, [formData]);
@@ -123,90 +127,118 @@ export default function DietFormClient() {
   const handleNext = () => {
     if (page < TOTAL_PAGES - 1) setPage(page + 1);
   };
+
   const handleBack = () => {
     if (page > 0) setPage(page - 1);
   };
 
-  const handleDietTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormData({ ...formData, dietType: e.target.value as DietType });
+  const handleDietTypeChange = (e) => {
+    setFormData({ ...formData, dietType: e.target.value });
   };
 
-  const handleAnswerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAnswerChange = (e) => {
     const newAnswers = [...formData.answers];
     newAnswers[page - 1] = e.target.value;
     setFormData({ ...formData, answers: newAnswers });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     localStorage.setItem("formCompleted", "true");
     localStorage.removeItem("dietFormData");
-    router.push("/"); // Redirect to main app
+    router.push("/"); // Redirect after submit
   };
 
-  const getQuestion = (idx: number) => {
+  const getQuestion = (idx) => {
     if (!formData.dietType) return `Question ${idx + 1}`;
     return QUESTIONS[formData.dietType][idx] || `Question ${idx + 1}`;
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "2rem auto", fontFamily: "sans-serif" }}>
-      <h1>Diet Onboarding Form</h1>
-      <form onSubmit={handleSubmit}>
-        {page === 0 ? (
-          <div>
-            <label>
-              Select your diet type:
-              <select value={formData.dietType || ""} onChange={handleDietTypeChange} required>
-                <option value="" disabled>
-                  -- Choose --
-                </option>
-                {DIET_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
+    <Layout
+      userName={user?.name || "User"}
+      notificationsCount={2}
+      showHeader={true}
+    >
+      <div className="diet-form-container" style={{ maxWidth: 400, margin: "2rem auto", fontFamily: "sans-serif" }}>
+        <h1>Diet Preferences</h1>
+        <form onSubmit={handleSubmit}>
+          {page === 0 ? (
+            <div>
+              <label>
+                Select your diet type:
+                <select
+                  value={formData.dietType || ""}
+                  onChange={handleDietTypeChange}
+                  required
+                  style={{ display: "block", marginTop: 8, padding: 8, width: "100%" }}
+                >
+                  <option value="" disabled>
+                    -- Choose --
                   </option>
-                ))}
-              </select>
-            </label>
+                  {DIET_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          ) : (
+            <div>
+              <label>
+                {getQuestion(page - 1)}
+                <input
+                  type="text"
+                  value={formData.answers[page - 1] || ""}
+                  onChange={handleAnswerChange}
+                  required
+                  style={{ display: "block", marginTop: 8, padding: 8, width: "100%" }}
+                />
+              </label>
+            </div>
+          )}
+
+          <div style={{ marginTop: 24 }}>
+            {page > 0 && (
+              <button
+                type="button"
+                onClick={handleBack}
+                style={{ marginRight: 8, padding: "8px 16px" }}
+              >
+                Back
+              </button>
+            )}
+            {page < TOTAL_PAGES - 1 && (
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={
+                  page === 0
+                    ? !formData.dietType
+                    : !formData.answers[page - 1]?.trim()
+                }
+                style={{ padding: "8px 16px" }}
+              >
+                Next
+              </button>
+            )}
+            {page === TOTAL_PAGES - 1 && (
+              <button
+                type="submit"
+                disabled={!formData.answers[page - 1]?.trim()}
+                style={{ padding: "8px 16px" }}
+              >
+                Submit
+              </button>
+            )}
           </div>
-        ) : (
-          <div>
-            <label>
-              {getQuestion(page - 1)}
-              <input
-                type="text"
-                value={formData.answers[page - 1] || ""}
-                onChange={handleAnswerChange}
-                required
-              />
-            </label>
+
+          <div style={{ marginTop: 16, fontSize: "0.9em", color: "#666" }}>
+            Page {page + 1} of {TOTAL_PAGES}
           </div>
-        )}
-        <div style={{ marginTop: 24 }}>
-          {page > 0 && (
-            <button type="button" onClick={handleBack} style={{ marginRight: 8 }}>
-              Back
-            </button>
-          )}
-          {page < TOTAL_PAGES - 1 && (
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={page === 0 ? !formData.dietType : !formData.answers[page - 1]}
-            >
-              Next
-            </button>
-          )}
-          {page === TOTAL_PAGES - 1 && (
-            <button type="submit" disabled={!formData.answers[page - 1]}>
-              Submit
-            </button>
-          )}
-        </div>
-        <div style={{ marginTop: 16 }}>
-          Page {page + 1} of {TOTAL_PAGES}
-        </div>
-      </form>
-    </div>
+        </form>
+      </div>
+    </Layout>
   );
-} 
+}
