@@ -7,7 +7,7 @@ type RegisterResponse = {
   message?: string;
 };
 
-export default function RegisterPage() {
+export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -48,7 +48,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="page-shell">
+    <div className="auth-container">
       <form className="form card" onSubmit={onSubmit}>
         <div className="brand" style={{ marginBottom: 12 }}>
           <div className="logo">M4V</div>
